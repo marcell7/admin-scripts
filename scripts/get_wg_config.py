@@ -58,6 +58,7 @@ def add_peer_to_server(auth, base_uri, wg_name, client_public_key, client_addres
     r = requests.put(f"{base_uri}/rest/interface/wireguard/peers", auth=auth, verify=False, data=data)
     return r
 
+
 def generate_config(client_private_key, client_address, server_public_key, allowed_ips, server_ip, dns, output_path):
     template = \
     f"""[Interface]
@@ -81,13 +82,13 @@ if __name__ == "__main__":
     parser.add_argument("--username", default="admin", help="Mikrotik router username. Default is admin")
     parser.add_argument("--password", help="Mikrotik router password")
     parser.add_argument("--allowed_ips", default="0.0.0.0/0", help="IPs that will be tunneled. Check WG documentation. Default is 0.0.0.0/0")
-    parser.add_argument("--server_ip", help="Mikrotik public facing IP and port in format {ip:port}. Default port is 13231")
+    parser.add_argument("--server_ip", help="Mikrotik public facing IP and port in format {address:port}. Default port is 13231")
     parser.add_argument("--wg_name", default="wireguard1", help="Wireguard interface name. Check in RouterOS. Default is wireguard1")
     parser.add_argument("--dns", default="8.8.8.8", help="DNS address. Default is Google dns server 8.8.8.8")
     parser.add_argument("--output_path", default="wg0.conf", help="File output path. Default is wg0.conf. File is saved in the working dir")
     parser.add_argument("--comment", default=f"{date.today()}", help="Comment to add to a peer. Default is today's date.")
     args = parser.parse_args()
-    print(args)
+
     wg_version = subprocess.run(["wg", "--version"], capture_output=True, text=True)
     if wg_version.returncode != 0:
         print("Wireguard not installed.")
@@ -97,8 +98,6 @@ if __name__ == "__main__":
 
     auth = (args.username, args.password)
     base_uri = f"http://{args.address}"
-
-
     client_private_key = get_client_private_key()
     client_address = get_available_client_address(auth, base_uri, args.wg_name)
     server_public_key = get_wg_server_public_key(auth, base_uri, args.wg_name)

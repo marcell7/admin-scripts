@@ -1,15 +1,16 @@
 # Configure Wireguard VPN on Mikrotik RouterOS
 # Works on Mikrotik RouterOS 7 or greater
 # Works for my usecase. Run at your own risk. Not responsible for any complaints from your VPN users :)
+# Mikrotik router is accessed via http, thus it is not safe to use this script over the internet. Check: https://help.mikrotik.com/docs/display/ROS/REST+API
 
-# This script create a wg server and adds two basic firewall rules.
+# This script creates a wg server and adds two basic firewall rules.
 
 import argparse
 import requests
 
 
-def set_wg_server(base_uri, auth, wg_name):
-    data = f'{{"name": "{wg_name}"}}'
+def set_wg_server(base_uri, auth, wg_name, listen_port):
+    data = f'{{"name": "{wg_name}", "listen-port":"{listen_port}"}}'
     r = requests.put(f"{base_uri}/rest/interface/wireguard", auth=auth, verify=False, data=data)
     return r
 
@@ -35,12 +36,15 @@ if __name__ == "__main__":
     parser.add_argument("--username", default="admin", help="Mikrotik router username. Default is admin")
     parser.add_argument("--password", help="Mikrotik router password")
     parser.add_argument("--wg_name", default="wireguard1", help="Wireguard interface name. Default is wireguard1")
+    parser.add_argument("--listen_port", default="13231", help="Wireguard listen port")
     parser.add_argument("--wg_ip_range", default="192.168.100.1/24", help="IP address range for wireguard. Default is 192.168.100.0/24")
     args = parser.parse_args()
 
     base_uri = f"http://{args.address}"
     auth = (args.username, args.password)
 
-    set_wg_server(base_uri, auth, args.wg_name)
+    set_wg_server(base_uri, auth, args.wg_name, args.listen_port)
     add_ip_address_range(base_uri, auth, args.wg_ip_range, args.wg_name)
-    rs = add_firewall_rules(base_uri, auth, args.wg_ip_range)
+    add_firewall_rules(base_uri, auth, args.wg_ip_range)
+
+    print("FINISHED")
